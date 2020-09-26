@@ -1,0 +1,2 @@
+
+* My configuation for emacs.
