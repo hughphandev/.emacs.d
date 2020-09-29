@@ -1,5 +1,6 @@
 #+STARTIP: overview
 * interface tweaks
+** general
 #+BEGIN_SRC emacs-lisp
 (setq inhibit-startup-message t)
 (tool-bar-mode -1)
@@ -9,6 +10,22 @@
 (global-set-key (kbd "<f5>") 'revert-buffer)
 #+END_SRC
 
+** theme
+#+BEGIN_SRC emacs-lisp
+(use-package solarized-theme
+  :ensure t
+  :init (load-theme 'solarized-dark t))
+#+END_SRC
+
+** font
+#+BEGIN_SRC emacs-lisp
+(set-face-attribute 'default nil :font "Fira Code Retina" :height 100)
+#+END_SRC
+
+** alias
+#+BEGIN_SRC emacs-lisp
+(defalias 'list-buffers 'ibuffer-other-window)
+#+END_SRC
 * try
 #+BEGIN_SRC emacs-lisp
 (use-package try
@@ -20,13 +37,6 @@
 (use-package which-key
   :ensure t
   :init (which-key-mode))
-#+END_SRC
-
-* solarized
-#+BEGIN_SRC emacs-lisp
-(use-package solarized-theme
-  :ensure t
-  :init (load-theme 'solarized-dark t))
 #+END_SRC
 
 * evil
@@ -52,5 +62,3 @@
 (setq ido-everywhere t)
 (ido-mode 1)
 #+END_SRC
-* alias
-(defalias 'list-buffers 'ibuffer-other-window)
