@@ -1,54 +1,50 @@
 #+STARTUP: overview hidestars 
-* Interface Tweaks
-** Genergal
+* Use Package
 #+BEGIN_SRC emacs-lisp
-(setq inhibit-startup-message t)
-(tool-bar-mode -1)
-(menu-bar-mode -1)
-(scroll-bar-mode -1)
-(fset 'yes-or-no-p 'y-or-n-p)
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+(require 'use-package)
+(setq use-package-always-ensure t)
 #+END_SRC
 
-** Theme
-#+BEGIN_SRC emacs-lisp
-(use-package solarized-theme
-  :ensure t
-  :init (load-theme 'solarized-dark t))
-#+END_SRC
-
-** Font
-#+BEGIN_SRC emacs-lisp
-(set-face-attribute 'default nil :font "Fira Code Retina" :height 100)
-#+END_SRC
-
-** Alias
-#+BEGIN_SRC emacs-lisp
-(defalias 'list-buffers 'ibuffer-other-window)
-#+END_SRC
 * Try
 #+BEGIN_SRC emacs-lisp
-(use-package try
-  :ensure t)
+(use-package try)
 #+END_SRC
 
 * Which Key
 #+BEGIN_SRC emacs-lisp
 (use-package which-key
-  :ensure t
-  :init (which-key-mode))
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 0.3))
 #+END_SRC
 
-t* evil
+* Evil
 #+BEGIN_SRC emacs-lisp
 (use-package evil
-  :ensure t
-  :config (evil-mode))
+  :init
+  (setq evil-want-intergration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-i-jump nil)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-d-scroll t)
+  :config
+  (evil-mode 1)
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line))
+
+(use-package evil-collection
+  :after evil
+  :config
+  (evil-collection-init t))
 #+END_SRC
 
 * Company
 #+BEGIN_SRC emacs-lisp
 (use-package company
-  :ensure t
   :init (add-hook 'after-init-hook 'global-company-mode)
   :config
   (setq company-idle-delay 0)
@@ -61,17 +57,97 @@ t* evil
 (setq ido-everywhere t)
 (ido-mode 1)
 #+END_SRC
+
 * Org
 #+BEGIN_SRC emacs-lisp
-(use-package org-bullets 
-  :ensure t)
+(use-package org-bullets)
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 #+END_SRC
+
 * C/C++
 #+BEGIN_SRC emacs-lisp
 #+END_SRC
-* Auto Save
+
+* Lisp
+** Paredit
+#+BEGIN_SRC emacs-lisp
+(global-font-lock-mode 1)
+(use-package paredit
+  :init
+  (autoload 'enable-paredit-mode "paredit" "Turn on pseudo-structural editing of Lisp code." t)
+  (add-hook 'emacs-lisp-mode-hook       #'enable-paredit-mode)
+  (add-hook 'eval-expression-minibuffer-setup-hook #'enable-paredit-mode)
+  (add-hook 'ielm-mode-hook             #'enable-paredit-mode)
+  (add-hook 'lisp-mode-hook             #'enable-paredit-mode)
+  (add-hook 'lisp-interaction-mode-hook #'enable-paredit-mode)
+  (add-hook 'scheme-mode-hook           #'enable-paredit-mode)
+  (add-hook 'inferior-scheme-mode-hook  #'enable-paredit-mode))
+#+END_SRC
+** Scheme
+#+BEGIN_SRC emacs-lisp
+(global-font-lock-mode 1) 
+(setq show-paren-delay 0 show-paren-style 'parenthesis) (show-paren-mode 1) 
+(setq scheme-program-name "mzscheme")
+#+END_SRC
+
+* Magit
+#+BEGIN_SRC emacs-lisp
+(use-package magit)
+(use-package evil-magit
+  :after magit)
+
+;; fix server bug on window
+(require 'server)
+ (and (>= emacs-major-version 23)
+     (defun server-ensure-safe-dir (dir) "Noop" t))
+#+END_SRC
+
+* Tweaks
+** General
+#+BEGIN_SRC emacs-lisp
+(setq inhibit-startup-message t)
+(tool-bar-mode -1)
+(menu-bar-mode -1)
+(scroll-bar-mode -1)
+(fset 'yes-or-no-p 'y-or-n-p)
+(set-fringe-mode 10)
+#+END_SRC
+
+** Theme
+#+BEGIN_SRC emacs-lisp
+(use-package doom-themes
+  :config (load-theme 'doom-solarized-dark t))
+#+END_SRC
+
+** Font
+#+BEGIN_SRC emacs-lisp
+(set-face-attribute 'default nil :font "Fira Code Retina" :height 100)
+(set-fontset-font t nil "symbola" nil 'append)
+#+END_SRC
+
+** Mode Line
+#+BEGIN_SRC emacs-lisp
+;; all-the-icons fonts required
+(use-package all-the-icons)
+(use-package doom-modeline
+  :init (doom-modeline-mode 1)
+  :config
+  (setq doom-modeline-height 1)
+  (set-face-attribute 'mode-line nil :height 90))
+#+END_SRC
+
+** Alias
+#+BEGIN_SRC emacs-lisp
+(defalias 'list-buffers 'ibuffer-other-window)
+#+END_SRC
+
+** Auto Save
 #+BEGIN_SRC emacs-lisp
 (setq backup-directory-alist 
       '(("." . "~/.emacs-saves")))
+#+END_SRC
+
+** Keybind
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 #+END_SRC
