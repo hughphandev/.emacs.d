@@ -1,16 +1,105 @@
 #+STARTUP: overview hidestars 
-* Use Package
+* Use Package + Straight
 #+BEGIN_SRC emacs-lisp
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-(require 'use-package)
-(setq use-package-always-ensure t)
+(setq straight-use-package-by-default t)
+
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
+(straight-use-package 'use-package)
+
+(use-package el-patch
+  :straight t)
+
+(setq straight-check-for-modifications '(check-on-save find-when-checking))
 #+END_SRC
 
 * Try
 #+BEGIN_SRC emacs-lisp
 (use-package try)
+#+END_SRC
+
+* Evil
+#+BEGIN_SRC emacs-lisp
+ ;; Make ESC quit prompts
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+
+(use-package evil
+  :init
+  (setq evil-want-intergration t)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-i-jump nil)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-d-scroll t)
+  :config
+  (evil-mode 1)
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+  (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+
+  ;; Use visual line motions even outside of visual-line-mode buffers
+  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+
+  (evil-set-initial-state 'messages-buffer-mode 'normal)
+  (evil-set-initial-state 'dashboard-mode 'normal))
+
+(use-package evil-collection
+  :after evil
+  :config
+  (evil-collection-init)
+  (evil-global-set-key 'motion "k" 'evil-previous-visual-line))
+
+#+END_SRC
+
+* File Management
+** Dired
+#+BEGIN_SRC emacs-lisp
+(use-package dired
+  :straight nil
+  :commands (dired dired-jump)
+  :bind (("C-x C-j" . dired-jump))
+  :config
+  (evil-collection-define-key 'normal 'dired-mode-map
+    "h" 'dired-single-up-directory
+    "l" 'dired-single-buffer))
+
+(use-package dired-single)
+
+(use-package all-the-icons-dired
+  :hook (dired-mode . all-the-icons-dired-mode))
+#+END_SRC
+* Ivy-Counsel-Swiper
+#+BEGIN_SRC emacs-lisp
+(use-package counsel
+  :bind
+  (("C-x C-f" . counsel-find-file)
+  ("M-x" . counsel-M-x)
+  ("C-s" . swiper-isearch)
+  :map ivy-minibuffer-map
+  ("C-l" . ivy-alt-done)
+  ("C-j" . ivy-next-line)
+  ("C-k" . ivy-previous-line)
+  :map ivy-switch-buffer-map
+  ("C-k" . ivy-previous-line)
+  ("C-l" . ivy-done)
+  ("C-d" . ivy-switch-buffer-kill)
+  :map ivy-reverse-i-search-map
+  ("C-k" . ivy-previous-line)
+  ("C-d" . ivy-reverse-i-search-kill))
+  :config
+  (ivy-mode 1)
+  (counsel-mode 1))
 #+END_SRC
 
 * Which Key
@@ -22,33 +111,63 @@
   (setq which-key-idle-delay 0.3))
 #+END_SRC
 
-* Evil
+* language
+** Language Servers
 #+BEGIN_SRC emacs-lisp
-(use-package evil
-  :init
-  (setq evil-want-intergration t)
-  (setq evil-want-keybinding nil)
-  (setq evil-want-C-i-jump nil)
-  (setq evil-want-C-u-scroll t)
-  (setq evil-want-C-d-scroll t)
-  :config
-  (evil-mode 1)
-  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-  (evil-global-set-key 'motion "k" 'evil-previous-visual-line))
+(defun jusa/lsp-mode-setup()
+  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols)) (lsp-headerline-breadcrumb-mode))
 
-(use-package evil-collection
-  :after evil
-  :config
-  (evil-collection-init t))
+(use-package lsp-mode
+  :commands lsp 
+  :hook 
+  ((prog-mode . lsp)
+  (lsp-mode . jusa/lsp-mode-setup)
+  (lsp-mode . lsp-enable-which-key-integration))
+  :init
+  (setq lsp-keymap-prefix "C-c l"))
+
+(use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
 #+END_SRC
 
-* Company
+** Language
+*** C/C++
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
+** GDScript
+#+BEGIN_SRC emacs-lisp
+(use-package gdscript-mode
+    :straight (gdscript-mode
+               :type git
+               :host github
+               :repo "GDQuest/emacs-gdscript-mode"))
+
+(defun lsp--gdscript-ignore-errors (original-function &rest args)
+  "Ignore the error message resulting from Godot not replying to the `JSONRPC' request."
+  (if (string-equal major-mode "gdscript-mode")
+      (let ((json-data (nth 0 args)))
+        (if (and (string= (gethash "jsonrpc" json-data "") "2.0")
+                 (not (gethash "id" json-data nil))
+                 (not (gethash "method" json-data nil)))
+            nil ; (message "Method not found")
+          (apply original-function args)))
+    (apply original-function args)))
+;; Runs the function `lsp--gdscript-ignore-errors` around `lsp--get-message-type` to suppress unknown notification errors.
+(advice-add #'lsp--get-message-type :around #'lsp--gdscript-ignore-errors)
+#+END_SRC
+
+** Utilities
+*** Company
 #+BEGIN_SRC emacs-lisp
 (use-package company
-  :init (add-hook 'after-init-hook 'global-company-mode)
+  :hook (prog-mode . company-mode)
   :config
   (setq company-idle-delay 0)
   (setq company-minimum-prefix-length 3))
+
+(defvar +lsp-company-backends 'company-capf
+  "The backends to prepend to `company-backends' in `lsp-mode' buffers.
+Can be a list of backends; accepts any value `company-backends' accepts.")
 #+END_SRC
 
 * Ido
@@ -60,12 +179,18 @@
 
 * Org
 #+BEGIN_SRC emacs-lisp
-(use-package org-bullets)
-(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-#+END_SRC
+(defun jusa/org-mode-setup()
+  (org-indent-mode)
+  (auto-fill-mode 0)
+  (visual-line-mode 1)
+  (setq evil-auto-indent nil))
 
-* C/C++
-#+BEGIN_SRC emacs-lisp
+(use-package org
+  :hook (org-mode . jusa/org-mode-setup))
+
+(use-package org-bullets
+  :after org
+  :hook (org-mode . org-bullets-mode))
 #+END_SRC
 
 * Lisp
@@ -75,13 +200,15 @@
 (use-package paredit
   :init
   (autoload 'enable-paredit-mode "paredit" "Turn on pseudo-structural editing of Lisp code." t)
-  (add-hook 'emacs-lisp-mode-hook       #'enable-paredit-mode)
-  (add-hook 'eval-expression-minibuffer-setup-hook #'enable-paredit-mode)
-  (add-hook 'ielm-mode-hook             #'enable-paredit-mode)
-  (add-hook 'lisp-mode-hook             #'enable-paredit-mode)
-  (add-hook 'lisp-interaction-mode-hook #'enable-paredit-mode)
-  (add-hook 'scheme-mode-hook           #'enable-paredit-mode)
-  (add-hook 'inferior-scheme-mode-hook  #'enable-paredit-mode))
+  :hook
+  ((emacs-lisp-mode . paredit-mode)
+  (eval-expression-minibuffer-setup . paredit-mode)
+  (ielm-mode . paredit-mode)
+  (lisp-mode . paredit-mode)
+  (lisp-interaction-mode . paredit-mode)
+  (scheme-mode . paredit-mode)
+  (geiser-repl-mode . paredit-mode)
+  (inferior-scheme-mode . paredit-mode)))
 #+END_SRC
 ** Scheme
 #+BEGIN_SRC emacs-lisp
@@ -136,11 +263,6 @@
   (set-face-attribute 'mode-line nil :height 90))
 #+END_SRC
 
-** Alias
-#+BEGIN_SRC emacs-lisp
-(defalias 'list-buffers 'ibuffer-other-window)
-#+END_SRC
-
 ** Auto Save
 #+BEGIN_SRC emacs-lisp
 (setq backup-directory-alist 
@@ -149,5 +271,5 @@
 
 ** Keybind
 #+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 #+END_SRC
+
