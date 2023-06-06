@@ -1,5 +1,6 @@
 #+STARTUP: overview hidestars 
-* Use Package + Straight
+* Packages
+** Use Package + Straight
 #+BEGIN_SRC emacs-lisp
 (setq straight-use-package-by-default t)
 
@@ -24,35 +25,36 @@
 (setq straight-check-for-modifications '(check-on-save find-when-checking))
 #+END_SRC
 
-* Try
+** Try
 #+BEGIN_SRC emacs-lisp
 (use-package try)
 #+END_SRC
 
-* Evil
+** Evil
 #+BEGIN_SRC emacs-lisp
- ;; Make ESC quit prompts
-(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+  ;; Make ESC quit prompts
+  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
-(use-package evil
-  :init
-  (setq evil-want-intergration t)
-  (setq evil-want-keybinding nil)
-  (setq evil-want-C-i-jump nil)
-  (setq evil-want-C-u-scroll t)
-  (setq evil-want-C-d-scroll t)
-  :config
-  (evil-mode 1)
-  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-  (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
-  (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
+  (use-package evil
+    :init
+    (setq evil-want-intergration t)
+    (setq evil-want-keybinding nil)
+    (setq evil-want-C-i-jump nil)
+    (setq evil-want-C-u-scroll t)
+    (setq evil-want-C-d-scroll t)
+    (setq evil-undo-system 'undo-redo)
 
-  ;; Use visual line motions even outside of visual-line-mode buffers
-  (evil-global-set-key 'motion "j" 'evil-next-visual-line)
-  (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+    :config
+    (evil-mode 1)
+    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+    (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+    (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
 
-  (evil-set-initial-state 'messages-buffer-mode 'normal)
-  (evil-set-initial-state 'dashboard-mode 'normal))
+    ;; Use visual line motions even outside of visual-line-mode buffers
+    (evil-global-set-key 'motion "j" 'evil-next-visual-line)
+    (evil-global-set-key 'motion "k" 'evil-previous-visual-line)
+    (evil-set-initial-state 'messages-buffer-mode 'normal)
+    (evil-set-initial-state 'dashboard-mode 'normal))
 
 (use-package evil-collection
   :after evil
@@ -62,7 +64,6 @@
 
 #+END_SRC
 
-* File Management
 ** Dired
 #+BEGIN_SRC emacs-lisp
 (use-package dired
@@ -79,7 +80,7 @@
 (use-package all-the-icons-dired
   :hook (dired-mode . all-the-icons-dired-mode))
 #+END_SRC
-* Ivy-Counsel-Swiper
+** Ivy-Counsel-Swiper
 #+BEGIN_SRC emacs-lisp
 (use-package counsel
   :bind
@@ -102,7 +103,7 @@
   (counsel-mode 1))
 #+END_SRC
 
-* Which Key
+** Which Key
 #+BEGIN_SRC emacs-lisp
 (use-package which-key
   :init (which-key-mode)
@@ -111,73 +112,14 @@
   (setq which-key-idle-delay 0.3))
 #+END_SRC
 
-* language
-** Language Servers
-#+BEGIN_SRC emacs-lisp
-(defun jusa/lsp-mode-setup()
-  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols)) (lsp-headerline-breadcrumb-mode))
-
-(use-package lsp-mode
-  :commands lsp 
-  :hook 
-  ((prog-mode . lsp)
-  (lsp-mode . jusa/lsp-mode-setup)
-  (lsp-mode . lsp-enable-which-key-integration))
-  :init
-  (setq lsp-keymap-prefix "C-c l"))
-
-(use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
-#+END_SRC
-
-** Language
-*** C/C++
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
-
-** GDScript
-#+BEGIN_SRC emacs-lisp
-(use-package gdscript-mode
-    :straight (gdscript-mode
-               :type git
-               :host github
-               :repo "GDQuest/emacs-gdscript-mode"))
-
-(defun lsp--gdscript-ignore-errors (original-function &rest args)
-  "Ignore the error message resulting from Godot not replying to the `JSONRPC' request."
-  (if (string-equal major-mode "gdscript-mode")
-      (let ((json-data (nth 0 args)))
-        (if (and (string= (gethash "jsonrpc" json-data "") "2.0")
-                 (not (gethash "id" json-data nil))
-                 (not (gethash "method" json-data nil)))
-            nil ; (message "Method not found")
-          (apply original-function args)))
-    (apply original-function args)))
-;; Runs the function `lsp--gdscript-ignore-errors` around `lsp--get-message-type` to suppress unknown notification errors.
-(advice-add #'lsp--get-message-type :around #'lsp--gdscript-ignore-errors)
-#+END_SRC
-
-** Utilities
-*** Company
-#+BEGIN_SRC emacs-lisp
-(use-package company
-  :hook (prog-mode . company-mode)
-  :config
-  (setq company-idle-delay 0)
-  (setq company-minimum-prefix-length 3))
-
-(defvar +lsp-company-backends 'company-capf
-  "The backends to prepend to `company-backends' in `lsp-mode' buffers.
-Can be a list of backends; accepts any value `company-backends' accepts.")
-#+END_SRC
-
-* Ido
+** Ido
 #+BEGIN_SRC emacs-lisp
 (setq ido-enable-flex-matching t)
 (setq ido-everywhere t)
 (ido-mode 1)
 #+END_SRC
 
-* Org
+** Org
 #+BEGIN_SRC emacs-lisp
 (defun jusa/org-mode-setup()
   (org-indent-mode)
@@ -193,7 +135,7 @@ Can be a list of backends; accepts any value `company-backends' accepts.")
   :hook (org-mode . org-bullets-mode))
 #+END_SRC
 
-* Lisp
+** Lisp
 ** Paredit
 #+BEGIN_SRC emacs-lisp
 (global-font-lock-mode 1)
@@ -217,11 +159,9 @@ Can be a list of backends; accepts any value `company-backends' accepts.")
 (setq scheme-program-name "mzscheme")
 #+END_SRC
 
-* Magit
+** Magit
 #+BEGIN_SRC emacs-lisp
 (use-package magit)
-(use-package evil-magit
-  :after magit)
 
 ;; fix server bug on window
 (require 'server)
@@ -229,6 +169,46 @@ Can be a list of backends; accepts any value `company-backends' accepts.")
      (defun server-ensure-safe-dir (dir) "Noop" t))
 #+END_SRC
 
+** General
+#+BEGIN_SRC emacs-lisp
+(use-package general)
+#+END_SRC
+* language
+** Language Servers
+#+BEGIN_SRC emacs-lisp
+(defun jusa/lsp-mode-setup()
+  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols)) (lsp-headerline-breadcrumb-mode))
+
+(use-package lsp-mode
+  :commands lsp 
+  :hook 
+  ((prog-mode . lsp)
+  (lsp-mode . jusa/lsp-mode-setup)
+  (lsp-mode . lsp-enable-which-key-integration))
+  :init
+  (setq lsp-keymap-prefix "C-c l"))
+
+(use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
+#+END_SRC
+
+** Language
+*** C/C++
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
+** Utilities
+*** Company
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :hook (prog-mode . company-mode)
+  :config
+  (setq company-idle-delay 0)
+  (setq company-minimum-prefix-length 3))
+
+(defvar +lsp-company-backends 'company-capf
+  "The backends to prepend to `company-backends' in `lsp-mode' buffers.
+Can be a list of backends; accepts any value `company-backends' accepts.")
+#+END_SRC
 * Tweaks
 ** General
 #+BEGIN_SRC emacs-lisp
@@ -248,7 +228,7 @@ Can be a list of backends; accepts any value `company-backends' accepts.")
 
 ** Font
 #+BEGIN_SRC emacs-lisp
-(set-face-attribute 'default nil :font "Fira Code Retina" :height 100)
+(set-face-attribute 'default nil :font "Roboto Mono" :height 160)
 (set-fontset-font t nil "symbola" nil 'append)
 #+END_SRC
 
@@ -271,5 +251,229 @@ Can be a list of backends; accepts any value `company-backends' accepts.")
 
 ** Keybind
 #+BEGIN_SRC emacs-lisp
+ (general-define-key
+ :states '(normal motion visual)
+ :keymaps 'override
+ :prefix "SPC"
+
+ ;; Top level functions
+ "/" '(jib/rg :which-key "ripgrep")
+ ";" '(spacemacs/deft :which-key "deft")
+ ":" '(project-find-file :which-key "p-find file")
+ "." '(counsel-find-file :which-key "find file")
+ "," '(counsel-recentf :which-key "recent files")
+ "TAB" '(switch-to-prev-buffer :which-key "previous buffer")
+ "SPC" '(counsel-find-file :which-key "M-x")
+ "q" '(save-buffers-kill-terminal :which-key "quit emacs")
+ "r" '(jump-to-register :which-key "registers")
+ "c" 'org-capture
+
+;; "Applications"
+"a" '(nil :which-key "applications")
+"ao" '(org-agenda :which-key "org-agenda")
+"am" '(mu4e :which-key "mu4e")
+"aC" '(calc :which-key "calc")
+"ac" '(org-capture :which-key "org-capture")
+"aqq" '(org-ql-view :which-key "org-ql-view")
+"aqs" '(org-ql-search :which-key "org-ql-search")
+
+"ab" '(nil :which-key "browse url")
+"abf" '(browse-url-firefox :which-key "firefox")
+"abc" '(browse-url-chrome :which-key "chrome")
+"abx" '(xwidget-webkit-browse-url :which-key "xwidget")
+"abg" '(jib/er-google :which-key "google search")
+
+"ad" '(dired :which-key "dired")
+
+;; Buffers
+"b" '(nil :which-key "buffer")
+"bb" '(counsel-switch-buffer :which-key "switch buffers")
+"bd" '(evil-delete-buffer :which-key "delete buffer")
+"bs" '(jib/switch-to-scratch-buffer :which-key "scratch buffer")
+"bm" '(jib/kill-other-buffers :which-key "kill other buffers")
+"bi" '(clone-indirect-buffer  :which-key "indirect buffer")
+"br" '(revert-buffer :which-key "revert buffer")
+
+;; Files
+"f" '(nil :which-key "files")
+"fb" '(counsel-bookmark :which-key "bookmarks")
+"ff" '(counsel-find-file :which-key "find file")
+"fn" '(spacemacs/new-empty-buffer :which-key "new file")
+"fr" '(counsel-recentf :which-key "recent files")
+"fR" '(rename-file :which-key "rename file")
+"fs" '(save-buffer :which-key "save buffer")
+"fS" '(evil-write-all :which-key "save all buffers")
+"fo" '(reveal-in-osx-finder :which-key "reveal in finder")
+"fO" '(jib/open-buffer-file-mac :which-key "open buffer file")
+
+;; Jake
+"j" '(nil :which-key "jake")
+"jb" '((lambda() (interactive) (find-file (concat jib/dropbox "org/work.org"))) :which-key "work.org")
+"jc" '((lambda() (interactive) (find-file (concat jib/dropbox "org/cpb.org"))) :which-key "cpb.org")
+
+"jr" '(restart-emacs :which-key "restart emacs")
+
+"jh" '(nil :which-key "hydras")
+"jht" '(jb-hydra-theme-switcher/body :which-key "themes")
+"jhf" '(jb-hydra-variable-fonts/body :which-key "mixed-pitch face")
+"jhw" '(jb-hydra-window/body :which-key "window control")
+
+"jm" '(nil :which-key "macros/custom commands")
+"jml" '(jib/listify :which-key "Listify")
+"jmL" '(jib|SubListify :which-key "SubListify")
+"jmo" '(jib/org-temp-export-html :which-key "org temp export region")
+
+"jk" '(nil :which-key "agenda/ql")
+"jkq" '((lambda () (interactive) (org-ql-view "Jake Work Full View")) :which-key "jake ql")
+
+;; Help/emacs
+"h" '(nil :which-key "help/emacs")
+
+"hv" '(counsel-describe-variable :which-key "des. variable")
+"hb" '(counsel-descbinds :which-key "des. bindings")
+"hM" '(describe-mode :which-key "des. mode")
+"hf" '(counsel-describe-function :which-key "des. func")
+"hF" '(counsel-describe-face :which-key "des. face")
+"hk" '(describe-key :which-key "des. key")
+
+"hed" '((lambda () (interactive) (jump-to-register 67)) :which-key "edit dotfile")
+
+"hm" '(nil :which-key "switch mode")
+"hme" '(emacs-lisp-mode :which-key "elisp mode")
+"hmo" '(org-mode :which-key "org mode")
+"hmt" '(text-mode :which-key "text mode")
+
+"hp" '(nil :which-key "packages")
+"hpr" 'package-refresh-contents
+"hpi" 'package-install
+"hpd" 'package-delete
+
+;; Help/emacs
+"x" '(nil :which-key "text")
+"xC" '(jib/copy-whole-buffer-to-clipboard :which-key "copy whole buffer to clipboard")
+"xr" '(anzu-query-replace :which-key "find and replace")
+"xs" '(yas-insert-snippet :which-key "insert yasnippet")
+"xf" '(flush-lines :which-key "flush-lines")
+"xR" '(replace-regexp :which-key "replace-regexp")
+
+;; Toggles
+"t" '(nil :which-key "toggles")
+"tt" '(toggle-truncate-lines :which-key "truncate lines")
+"tv" '(visual-line-mode :which-key "visual line mode")
+"tn" '(display-line-numbers-mode :which-key "display line numbers")
+"ta" '(mixed-pitch-mode :which-key "variable pitch mode")
+"ty" '(counsel-load-theme :which-key "load theme")
+"tw" '(writeroom-mode :which-key "writeroom-mode")
+"tR" '(read-only-mode :which-key "read only mode")
+"tI" '(toggle-input-method :which-key "toggle input method")
+"tr" '(display-fill-column-indicator-mode :which-key "fill column indicator")
+"tm" '(hide-mode-line-mode :which-key "hide modeline mode")
+
+;; Windows
+"w" '(nil :which-key "window")
+"wm" '(maximize-window :which-key "maximize buffer")
+"wN" '(make-frame :which-key "make frame")
+"wd" '(evil-window-delete :which-key "delete window")
+"wc" '(evil-window-delete :which-key "delete window")
+"w-" '(split-window-vertically :which-key "split below")
+"w/" '(split-window-horizontally :which-key "split right")
+"wr" '(jb-hydra-window/body :which-key "hydra window")
+"wl" '(evil-window-right :which-key "evil-window-right")
+"wh" '(evil-window-left :which-key "evil-window-left")
+"wj" '(evil-window-down :which-key "evil-window-down")
+"wk" '(evil-window-up :which-key "evil-window-up")
+"wz" '(text-scale-adjust :which-key "text zoom")
+) ;; End SPC prefix block
+
+;; All-mode keymaps
+(general-def
+  :keymaps 'override
+
+  ;; Emacs --------
+  "M-x" 'counsel-M-x
+  "ß" 'evil-window-next ;; option-s
+  "Í" 'other-frame ;; option-shift-s
+  "C-S-B" 'counsel-switch-buffer
+  "∫" 'counsel-switch-buffer ;; option-b
+  "s-b" 'counsel-switch-buffer ;; super-b
+  "s-o" 'jb-hydra-window/body
+
+  ;; Remapping normal help features to use Counsel version
+  "C-h v" 'counsel-describe-variable
+  "C-h o" 'counsel-describe-symbol
+  "C-h f" 'counsel-describe-function
+  "C-h F" 'counsel-describe-face
+
+  ;; Editing ------
+  "M-v" 'simpleclip-paste
+  "M-V" 'evil-paste-after ;; shift-paste uses the internal clipboard
+  "M-c" 'simpleclip-copy
+  "M-u" 'capitalize-dwim ;; Default is upcase-dwim
+  "M-U" 'upcase-dwim ;; M-S-u (switch upcase and capitalize)
+
+  ;; Utility ------
+  "C-c c" 'org-capture
+  "C-c a" 'org-agenda
+  "C-s" 'swiper ;; Large files will use grep (faster)
+  "s-\"" 'ispell-word ;; that's super-shift-'
+  "M-+" 'jib/calc-speaking-time
+  "M-=" 'count-words
+  "C-'" 'avy-goto-char-2
+  "C-x C-b" 'bufler-list
+
+  ;; super-number functions
+  "s-1" 'mw-thesaurus-lookup-dwim
+  "s-!" 'mw-thesaurus-lookup
+  "s-2" 'ispell-buffer
+  "s-3" 'revert-buffer
+  "s-4" '(lambda () (interactive) (counsel-file-jump nil jib/dropbox))
+  "s-5" '(lambda () (interactive) (counsel-rg nil jib/dropbox))
+  "s-6" 'org-capture
+  "s-7" 'jib/open-dropbox-folder-in-finder
+  "s-8" 'jib/zoxide-wrapper
+
+  "s-w" 'kill-this-buffer
+  )
+
+;; Non-insert mode keymaps
+(general-def
+  :states '(normal visual motion)
+  "gc" 'comment-dwim
+  "gC" 'comment-line
+
+  "j" 'evil-next-visual-line ;; I prefer visual line navigation
+  "k" 'evil-previous-visual-line ;; "
+
+  "gf" 'xah-open-file-at-cursor
+  "f" 'evil-avy-goto-char-in-line
+
+  "\\" '(lambda () (interactive) (org-agenda nil "c"))
+  "|" '(lambda () (interactive) (org-ql-view "Columbia Todo"))
+  "]\\" '(lambda () (interactive) (org-agenda nil "w"))
+  )
+
+(general-def
+  :states '(normal visual motion)
+  :keymaps 'override
+  ;;"s" 'swiper
+  "?" 'evil-search-forward)
+
+;; Insert keymaps
+;; Many of these are emulating standard Emacs bindings in Evil insert mode, such as C-a, or C-e.
+(general-def
+  :states '(insert)
+  "C-a" 'evil-beginning-of-visual-line
+  "C-e" 'evil-end-of-visual-line
+  "C-S-a" 'evil-beginning-of-line
+  "C-S-e" 'evil-end-of-line
+  "C-n" 'evil-next-visual-line
+  "C-p" 'evil-previous-visual-line
+  )
+
+(general-def
+ :keymaps 'emacs
+  "C-w C-q" 'kill-this-buffer
+ ) 
 #+END_SRC
+
 
